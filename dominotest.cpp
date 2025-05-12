@@ -183,6 +183,8 @@ bool playLargeAI(vector<Domino>& hand, deque<Domino>& board, vector<Domino>& bon
 
 void gameManager(vector<Domino> player1, vector<Domino> player2, vector<Domino> boneyard) {
     deque<Domino> board;
+
+    // The first tile is drawn from the boneyard and placed on the board
     board.push_back(boneyard.back());
     boneyard.pop_back();
 
@@ -193,6 +195,7 @@ void gameManager(vector<Domino> player1, vector<Domino> player2, vector<Domino> 
 
     while (true) {
         bool played = false;
+
         if (p1Turn) {
             played = playSmallAI(player1, board, boneyard);
             cout << "[Player 1] ";
@@ -201,25 +204,30 @@ void gameManager(vector<Domino> player1, vector<Domino> player2, vector<Domino> 
             cout << "[Player 2] ";
         }
 
+        // Print the current state of the game
         for (const auto& d : board) cout << "[" << d.first << "|" << d.second << "] ";
         cout << (played ? "\n" : " - Pass\n");
 
+        // Check if either player has won
         if (player1.empty()) {
-            cout << "\n🏆 Player 1 wins!\n";
+            cout << "\n Player 1 wins!\n";
             break;
         }
         if (player2.empty()) {
-            cout << "\n🏆 Player 2 wins!\n";
+            cout << "\n Player 2 wins!\n";
             break;
         }
+
         if (!played) passCount++;
         else passCount = 0;
 
+        // If both players pass twice in a row, the game ends in a draw
         if (passCount >= 2) {
-            cout << "\n🛑 Game ends in a draw.\n";
+            cout << "\n Game ends in a draw.\n";
             break;
         }
 
+        // Switch turns
         p1Turn = !p1Turn;
     }
 }
