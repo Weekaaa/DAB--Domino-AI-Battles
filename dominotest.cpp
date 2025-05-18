@@ -9,6 +9,93 @@ using namespace std;
 
 using Domino = pair<int, int>;
 
+int main() {
+    // Seed RNG
+    random_device rd;
+    mt19937 gen(rd());
+
+    vector<Domino> dominoes = {
+        {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6},
+        {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6},
+        {2, 2}, {2, 3}, {2, 4}, {2, 5}, {2, 6},
+        {3, 3}, {3, 4}, {3, 5}, {3, 6},
+        {4, 4}, {4, 5}, {4, 6},
+        {5, 5}, {5, 6},
+        {6, 6}
+    };
+
+    // Shuffle the deck randomly
+    shuffleDeck(dominoes, gen);
+
+    // Distribute cards to players
+    vector<Domino> player1_cards, player2_cards;
+    distributeCards(dominoes, player1_cards, player2_cards, gen);
+
+
+    printDeck("Player 1", player1_cards);
+    printDeck("Player 2", player2_cards);
+    printDeck("Remaining dominoes (boneyard)", dominoes);
+
+
+    // Start the game
+    gameManager(player1_cards, player2_cards, dominoes);
+
+    return 0;
+}
+
+
+void gameManager(vector<Domino> player1, vector<Domino> player2, vector<Domino> boneyard) {
+    deque<Domino> board;
+
+    // The first tile is drawn from the boneyard and placed on the board
+    board.push_back(boneyard.back());
+    boneyard.pop_back();
+
+    cout << "Starting tile: [" << board.front().first << "|" << board.front().second << "]\n\n";
+
+    bool p1Turn = true;
+    int passCount = 0;
+
+    while (true) {
+        bool played = false;
+
+        if (p1Turn) {
+            played = playSmallAI(player1, board, boneyard);
+            cout << "[Player 1] ";
+        } else {
+            played = playLargeAI(player2, board, boneyard);
+            cout << "[Player 2] ";
+        }
+
+        // Print the current state of the game
+        for (const auto& d : board) cout << "[" << d.first << "|" << d.second << "] ";
+        cout << (played ? "\n" : " - Pass\n");
+
+        // Check if either player has won
+        if (player1.empty()) {
+            cout << "\n Player 1 wins!\n";
+            break;
+        }
+        if (player2.empty()) {
+            cout << "\n Player 2 wins!\n";
+            break;
+        }
+
+        if (!played) passCount++;
+        else passCount = 0;
+
+        // If both players pass twice in a row, the game ends in a draw
+        if (passCount >= 2) {
+            cout << "\n Game ends in a draw.\n";
+            break;
+        }
+
+        // Switch turns
+        p1Turn = !p1Turn;
+    }
+}
+
+
 void shuffleDeck(vector<Domino>& deck, mt19937& gen) {
     shuffle(deck.begin(), deck.end(), gen);
 }
@@ -38,7 +125,7 @@ void distributeCards(vector<Domino>& deck,
         // Multiple checks are ran to ensure that the player can recieve the card to ensure that the game is fair
         // 1. The player must have 7 cards
         // 2. The player must not have more than 5 of the same value
-        // 3. The player must not have more than 5 of the same suit
+        // 3. The player must not have more than 5 suits
         if (target == 0 && player1_cards.size() < 7 && player1_values_freq[card.first] < 5 && player1_values_freq[card.second] < 5 && player1_suits < 5) {
 
             // Add the value to the frequency vector
@@ -178,91 +265,4 @@ bool playLargeAI(vector<Domino>& hand, deque<Domino>& board, vector<Domino>& bon
             return false;
         }
     }
-}
-
-
-void gameManager(vector<Domino> player1, vector<Domino> player2, vector<Domino> boneyard) {
-    deque<Domino> board;
-
-    // The first tile is drawn from the boneyard and placed on the board
-    board.push_back(boneyard.back());
-    boneyard.pop_back();
-
-    cout << "Starting tile: [" << board.front().first << "|" << board.front().second << "]\n\n";
-
-    bool p1Turn = true;
-    int passCount = 0;
-
-    while (true) {
-        bool played = false;
-
-        if (p1Turn) {
-            played = playSmallAI(player1, board, boneyard);
-            cout << "[Player 1] ";
-        } else {
-            played = playLargeAI(player2, board, boneyard);
-            cout << "[Player 2] ";
-        }
-
-        // Print the current state of the game
-        for (const auto& d : board) cout << "[" << d.first << "|" << d.second << "] ";
-        cout << (played ? "\n" : " - Pass\n");
-
-        // Check if either player has won
-        if (player1.empty()) {
-            cout << "\n Player 1 wins!\n";
-            break;
-        }
-        if (player2.empty()) {
-            cout << "\n Player 2 wins!\n";
-            break;
-        }
-
-        if (!played) passCount++;
-        else passCount = 0;
-
-        // If both players pass twice in a row, the game ends in a draw
-        if (passCount >= 2) {
-            cout << "\n Game ends in a draw.\n";
-            break;
-        }
-
-        // Switch turns
-        p1Turn = !p1Turn;
-    }
-}
-
-
-int main() {
-    // Seed RNG
-    random_device rd;
-    mt19937 gen(rd());
-
-    vector<Domino> dominoes = {
-        {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {0, 6},
-        {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6},
-        {2, 2}, {2, 3}, {2, 4}, {2, 5}, {2, 6},
-        {3, 3}, {3, 4}, {3, 5}, {3, 6},
-        {4, 4}, {4, 5}, {4, 6},
-        {5, 5}, {5, 6},
-        {6, 6}
-    };
-
-    // Shuffle the deck randomly
-    shuffleDeck(dominoes, gen);
-
-    // Distribute cards to players
-    vector<Domino> player1_cards, player2_cards;
-    distributeCards(dominoes, player1_cards, player2_cards, gen);
-
-
-    printDeck("Player 1", player1_cards);
-    printDeck("Player 2", player2_cards);
-    printDeck("Remaining dominoes (boneyard)", dominoes);
-
-
-    // Start the game
-    gameManager(player1_cards, player2_cards, dominoes);
-
-    return 0;
 }
